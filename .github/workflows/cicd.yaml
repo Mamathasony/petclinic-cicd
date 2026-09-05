@@ -41,8 +41,8 @@ jobs:
           mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.7.0.6970:sonar \
             -Dsonar.projectKey=petclinic-cicd \
             -Dsonar.projectName=petclinic-cicd \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.host.url="$secrets.SONAR_HOST_URL" \
+            -Dsonar.token="$secrets.SONAR_TOKEN"
 
       # 6. Upload WAR to Nexus
       - name: Upload WAR to Nexus
