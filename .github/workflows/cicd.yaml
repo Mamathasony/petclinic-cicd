@@ -76,18 +76,10 @@ jobs:
 
 
       # 9. Deploy WAR to Nexus
-      - name: Deploy WAR to Nexus
+      - name: upload Artifact to NEXUS
         run: |
          mvn deploy \
          -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}
-
-      # 10. Download WAR from Nexus
-      - name: Download WAR from Nexus
-        run: |
-          curl -u "${{ secrets.NEXUS_USERNAME }}:${{ secrets.NEXUS_PASSWORD }}" \
-          -o petclinic-5.3.13.war \
-          "${{ secrets.NEXUS_WAR_URL }}"
-
 
       # 11. Copy WAR to Tomcat server
       - name: Copy WAR to Tomcat
