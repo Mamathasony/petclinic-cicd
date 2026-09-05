@@ -7,32 +7,45 @@ on:
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
 
     steps:
 
       # 1. Checkout source code
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Setup Java
+
+      # 2. Setup Java 17
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+          cache: maven
 
-      # 3. Build application using Maven
-      - name: Maven Build
-        run: |
-          mvn clean package -DskipTests
 
-      # 4. Run tests
-      - name: Maven Test
-        run: |
-          mvn test
+      # 3. Validate
+      - name: Validate
+        run: mvn validate
 
-      # 5. SonarQube Analysis
+
+      # 4. Compile
+      - name: Compile
+        run: mvn compile
+
+
+      # 5. Test
+      - name: Test
+        run: mvn test
+
+
+      # 6. Package WAR
+      - name: Package
+        run: mvn package
+
+      # 7. SonarQube Analysis
       - name: SonarQube Analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -43,6 +56,52 @@ jobs:
             -Dsonar.projectName=petclinic-cicd \
             -Dsonar.host.url="$secrets.SONAR_HOST_URL" \
             -Dsonar.token="$secrets.SONAR_TOKEN"
+      
+      # 8. Configure Maven settings.xml for Nexus
+      - name: Configure Maven settings.xml for Nexus
+        run: |
+          mkdir -p ~/.m2
+
+          cat <<EOF > ~/.m2/settings.xml
+          <settings>
+            <servers>
+              <server>
+                <id>nexus</id>
+                <username>${{ secrets.NEXUS_USERNAME }}</username>
+                <password>${{ secrets.NEXUS_PASSWORD }}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+
+      # 9. Deploy WAR to Nexus
+      - name: Deploy WAR to Nexus
+        run: mvn deploy
+
+
+      # 10. Download WAR from Nexus
+      - name: Download WAR from Nexus
+        run: |
+          curl -u "${{ secrets.NEXUS_USERNAME }}:${{ secrets.NEXUS_PASSWORD }}" \
+          -o petclinic-cicd.war \
+          "${{ secrets.NEXUS_WAR_URL }}"
+
+
+      # 11. Copy WAR to Tomcat server
+      - name: Copy WAR to Tomcat
+        run: |
+          scp -o StrictHostKeyChecking=no \
+          petclinic-cicd.war \
+          ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }}:/tmp/petclinic-cicd.war
+
+
+      # 12. Deploy WAR in Tomcat
+      - name: Deploy WAR to Tomcat
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+          ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }} \
+          "sudo cp /tmp/petclinic-cicd.war /opt/tomcat/webapps/petclinic-cicd.war"
 
       # 6. Upload WAR to Nexus
       - name: Upload WAR to Nexus
