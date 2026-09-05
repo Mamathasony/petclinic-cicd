@@ -81,19 +81,20 @@ jobs:
          mvn deploy \
          -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}
 
-      # 11. Copy WAR to Tomcat server
+      # 11. Install sshpass
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      # 12. Copy WAR to Tomcat server
       - name: Copy WAR to Tomcat
         run: |
-          scp -o StrictHostKeyChecking=no \
-          petclinic-cicd.war \
-          ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }}:/tmp/petclinic-5.3.14.war
+         sshpass -p "${{ secrets.TOMCAT_PASSWORD }}" scp -o StrictHostKeyChecking=no \
+           target/*.war \
+         ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }}:/tmp/petclinic-cicd.war
 
-
-      # 12. Deploy WAR in Tomcat
+      # 13. Deploy WAR to Tomcat
       - name: Deploy WAR to Tomcat
         run: |
-          ssh -o StrictHostKeyChecking=no \
+         sshpass -p "${{ secrets.TOMCAT_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
           ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }} \
-          "sudo cp /tmp/petclinic-cicd.war /opt/tomcat/webapps/petclinic-5.3.14.war"
-
-      
+         "echo '${{ secrets.TOMCAT_PASSWORD }}' | sudo -S cp /tmp/petclinic-cicd.war /opt/tomcat/webapps/petclinic-cicd.war"
