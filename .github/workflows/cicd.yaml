@@ -86,15 +86,17 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y sshpass
 
       # 12. Copy WAR to Tomcat server
-      - name: Copy WAR to Tomcat
+      - name: Download WAR
+        uses: actions/download-artifact@v4
+        with:
+         name: application-war
+     # 13. Deploy WAR to Tomcat
+      - name: Deploy WAR to TOMCAT using Curl
         run: |
-         sshpass -p "${{ secrets.TOMCAT_PASSWORD }}" scp -o StrictHostKeyChecking=no \
-           target/*.war \
-         ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }}:/tmp/petclinic-cicd.war
-
-      # 13. Deploy WAR to Tomcat
-      - name: Deploy WAR to Tomcat
-        run: |
-         sshpass -p "${{ secrets.TOMCAT_PASSWORD }}" ssh -o StrictHostKeyChecking=no \
-          ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }} \
-         "echo '${{ secrets.TOMCAT_PASSWORD }}' | sudo -S cp /tmp/petclinic-cicd.war /opt/tomcat/webapps/petclinic-cicd.war"
+         echo "Deploying WAR to TOMCAT..."
+         curl -v \
+         -u "${{ secrets.TOMCAT_USERNAME }}:${{ secrets.TOMCAT_PASSWORD }}" \
+         --upload-file *.war \
+         "http://${{ secrets.TOMCAT_HOST }}:8080/manager/text/deploy?path=/Petclinic-cicd&update=true"
+         echo "TOMCAT deployment completed."
+      
