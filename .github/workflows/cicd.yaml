@@ -77,14 +77,15 @@ jobs:
 
       # 9. Deploy WAR to Nexus
       - name: Deploy WAR to Nexus
-        run: mvn deploy
-
+        run: |
+         mvn deploy \
+         -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}
 
       # 10. Download WAR from Nexus
       - name: Download WAR from Nexus
         run: |
           curl -u "${{ secrets.NEXUS_USERNAME }}:${{ secrets.NEXUS_PASSWORD }}" \
-          -o petclinic-cicd.war \
+          -o petclinic-5.3.13.war \
           "${{ secrets.NEXUS_WAR_URL }}"
 
 
@@ -93,7 +94,7 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no \
           petclinic-cicd.war \
-          ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }}:/tmp/petclinic-cicd.war
+          ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }}:/tmp/petclinic-5.3.13.war
 
 
       # 12. Deploy WAR in Tomcat
@@ -101,26 +102,6 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
           ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }} \
-          "sudo cp /tmp/petclinic-cicd.war /opt/tomcat/webapps/petclinic-cicd.war"
+          "sudo cp /tmp/petclinic-cicd.war /opt/tomcat/webapps/petclinic-5.3.13.war"
 
-      # 6. Upload WAR to Nexus
-      - name: Upload WAR to Nexus
-        run: |
-          curl -u "${{ secrets.NEXUS_USERNAME }}:${{ secrets.NEXUS_PASSWORD }}" \
-          --upload-file target/*.war \
-          "${{ secrets.NEXUS_REPO_URL }}/repository/petclinic-cicd/petclinic-cicd.war"
-
-      # 7. Download WAR from Nexus
-      - name: Download WAR from Nexus
-        run: |
-          curl -u "${{ secrets.NEXUS_USERNAME }}:${{ secrets.NEXUS_PASSWORD }}" \
-          -o petclinic-cicd.war \
-          "${{ secrets.NEXUS_REPO_URL }}/repository/petclinic-cicd/petclinic-cicd.war"
-
-      # 8. Copy WAR to Tomcat server
-      - name: Deploy WAR to Tomcat
-        run: |
-          curl -u "${{ secrets.TOMCAT_USERNAME }}:${{ secrets.TOMCAT_PASSWORD }}" \
-          -T petclinic-cicd.war \
-          "http://${{ secrets.TOMCAT_HOST }}:8080/manager/text/deploy?path=/Petclinic-cicd&update=true"
-          "${{ secrets.TOMCAT_URL }}/manager/text/deploy?path=/petclinic-cicd&update=true"
+      
