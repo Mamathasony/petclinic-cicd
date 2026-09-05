@@ -76,7 +76,7 @@ jobs:
 
 
       # 9. Deploy WAR to Nexus
-      - name: upload Artifact to NEXUS
+      - name: Deploy WAR to Nexus
         run: |
          mvn deploy \
          -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}
