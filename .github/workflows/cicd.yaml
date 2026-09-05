@@ -81,22 +81,19 @@ jobs:
          mvn deploy \
          -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}
 
-      # 11. Install sshpass
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
-
-      # 12. Copy WAR to Tomcat server
-      - name: Download WAR
-        uses: actions/download-artifact@v4
-        with:
-         name: application-war
-     # 13. Deploy WAR to Tomcat
+      # 10. Deploy WAR to Tomcat using Curl
       - name: Deploy WAR to TOMCAT using Curl
         run: |
          echo "Deploying WAR to TOMCAT..."
+
+         WAR_FILE=$(find target -name "*.war" -type f | head -n 1)
+
+         echo "WAR file: $WAR_FILE"
+
          curl -v \
-         -u "${{ secrets.TOMCAT_USERNAME }}:${{ secrets.TOMCAT_PASSWORD }}" \
-         --upload-file *.war \
-         "http://${{ secrets.TOMCAT_HOST }}:8080/manager/text/deploy?path=/Petclinic-cicd&update=true"
-         echo "TOMCAT deployment completed."
+          -u "${{ secrets.TOMCAT_USERNAME }}:${{ secrets.TOMCAT_PASSWORD }}" \
+          --upload-file "$WAR_FILE" \
+          "http://${{ secrets.TOMCAT_HOST }}:8080/manager/text/deploy?path=/Petclinic-cicd&update=true"
+
+          echo "TOMCAT deployment completed."
       
