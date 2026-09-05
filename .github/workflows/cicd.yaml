@@ -86,7 +86,7 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no \
           petclinic-cicd.war \
-          ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }}:/tmp/petclinic-5.3.13.war
+          ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }}:/tmp/petclinic-5.3.14.war
 
 
       # 12. Deploy WAR in Tomcat
@@ -94,6 +94,6 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
           ${{ secrets.TOMCAT_USERNAME }}@${{ secrets.TOMCAT_HOST }} \
-          "sudo cp /tmp/petclinic-cicd.war /opt/tomcat/webapps/petclinic-5.3.13.war"
+          "sudo cp /tmp/petclinic-cicd.war /opt/tomcat/webapps/petclinic-5.3.14.war"
 
       
